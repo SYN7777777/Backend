@@ -8,11 +8,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: allowedOrigin,
+  credentials: true, // if you're using cookies or HTTP auth
 }));
 
 app.use(express.json());
