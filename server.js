@@ -49,6 +49,12 @@ const packages = [
     name: "Luxury Package",
     price: 110000,
     description: "Ultimate luxury experience with business class travel"
+  },
+  {
+    id: 999,
+    name: "Free Umrah Application",
+    price: 100,
+    description: "Application for free Umrah opportunity"
   }
 ];
 
@@ -136,7 +142,7 @@ app.post('/api/verify-payment', (req, res) => {
         payment_id: razorpay_payment_id,
         package_id: packageId,
         customer_info: customerInfo,
-        status: 'confirmed',
+        status: packageId === 999 ? 'application_received' : 'confirmed',
         created_at: new Date(),
       };
       
@@ -147,6 +153,7 @@ app.post('/api/verify-payment', (req, res) => {
         success: true,
         message: 'Payment verified successfully',
         booking_id: razorpay_order_id,
+        is_free_application: packageId === 999
       });
     } else {
       res.status(400).json({
@@ -166,7 +173,7 @@ app.post('/api/verify-payment', (req, res) => {
 
 // Route to get package details
 app.get('/api/packages', (req, res) => {
-  res.json({ success: true, packages });
+  res.json({ success: true, packages: packages.filter(pkg => pkg.id !== 999) });
 });
 
 // Route to get specific package
@@ -179,6 +186,68 @@ app.get('/api/packages/:id', (req, res) => {
   }
   
   res.json({ success: true, package });
+});
+
+// Route for UPI payment intent
+app.post('/api/create-upi-intent', async (req, res) => {
+  try {
+    const { packageId, customerInfo, paymentType, upiId } = req.body;
+    
+    // Validate UPI ID format
+    if (!upiId || !upiId.includes('@')) {
+      return res.status(400).json({ error: 'Invalid UPI ID format' });
+    }
+
+    const selectedPackage = packages.find(pkg => pkg.id === packageId);
+    if (!selectedPackage) {
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    let amount;
+    if (paymentType === 'full') {
+      amount = selectedPackage.price;
+    } else if (paymentType === 'initial') {
+      amount = 10000;
+    } else {
+      return res.status(400).json({ error: 'Invalid payment type' });
+    }
+
+    // Create a normal Razorpay order (UPI will be handled client-side)
+    const options = {
+      amount: amount * 100,
+      currency: 'INR',
+      receipt: `umrah_upi_${packageId}_${Date.now()}`,
+      notes: {
+        package_name: selectedPackage.name,
+        customer_name: customerInfo.name || 'Customer',
+        customer_email: customerInfo.email || 'customer@example.com',
+        customer_phone: customerInfo.phone || '9999999999',
+        payment_type: paymentType,
+        upi_id: upiId,
+        payment_method: 'upi'
+      },
+    };
+
+    const order = await razorpay.orders.create(options);
+    
+    res.json({
+      success: true,
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      package_name: selectedPackage.name,
+      upi_id: upiId,
+      deep_link: `upi://pay?pa=${upiId}&pn=UmrahTours&am=${amount}&cu=INR&tn=UmrahPackagePayment`
+    });
+
+  } catch (error) {
+    console.error('Error creating UPI intent:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to create UPI payment',
+      message: error.message
+    });
+  }
 });
 
 // Route for payment failure handling
