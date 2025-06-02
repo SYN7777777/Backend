@@ -9,11 +9,12 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
+  'https://akempires123.netlify.app',
+  'https://aksonsempire.com',
   'https://unrivaled-brioche-12d724.netlify.app',
-  "https://aksonsempire.com",
-  
-  // Add other domains if needed
+  'http://localhost:3000', // for local development
+  /\.netlify\.app$/, // regex to allow all Netlify subdomains
+  /\.vercel\.app$/ // if you deploy to Vercel in future
 ];
 
 app.use(cors({
@@ -21,7 +22,17 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.includes(origin)) {
+    // Check if origin matches any allowed origin or pattern
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return origin === allowed;
+      } else if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
       return callback(null, true);
     }
     
