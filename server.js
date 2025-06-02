@@ -12,37 +12,28 @@ const allowedOrigins = [
   'https://akempires123.netlify.app',
   'https://aksonsempire.com',
   'https://unrivaled-brioche-12d724.netlify.app',
-  'http://localhost:3000', // for local development
-  /\.netlify\.app$/, // regex to allow all Netlify subdomains
-  /\.vercel\.app$/ // if you deploy to Vercel in future
+  'http://localhost:3000',
+  new RegExp('^https:\\/\\/[a-zA-Z0-9-]+\\.netlify\\.app$'),
+  new RegExp('^https:\\/\\/[a-zA-Z0-9-]+\\.vercel\\.app$'),
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    // Check if origin matches any allowed origin or pattern
-    const isAllowed = allowedOrigins.some(allowed => {
-      if (typeof allowed === 'string') {
-        return origin === allowed;
-      } else if (allowed instanceof RegExp) {
-        return allowed.test(origin);
-      }
-      return false;
-    });
-    
+    const isAllowed = allowedOrigins.some(allowed =>
+      typeof allowed === 'string' ? allowed === origin : allowed.test(origin)
+    );
     if (isAllowed) {
-      return callback(null, true);
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed from this origin: ' + origin), false);
     }
-    
-    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-    return callback(new Error(msg), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
 
 // Handle preflight requests
 app.options('*', cors());
