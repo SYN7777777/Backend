@@ -66,7 +66,7 @@ const packages = [
   {
     id: 999,
     name: "Free Umrah Application",
-    price: 114,
+    price: 11,
     description: "Application for free Umrah opportunity"
   }
 ];
