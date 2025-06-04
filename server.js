@@ -9,12 +9,8 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 const allowedOrigins = [
-  'https://akempires123.netlify.app',
-  'https://aksonsempire.com',
-  'https://unrivaled-brioche-12d724.netlify.app',
-  'http://localhost:3000',
+  process.env.FRONTEND_URL,
   new RegExp('^https:\\/\\/[a-zA-Z0-9-]+\\.netlify\\.app$'),
-  new RegExp('^https:\\/\\/[a-zA-Z0-9-]+\\.vercel\\.app$'),
 ];
 
 app.use(cors({
@@ -70,7 +66,7 @@ const packages = [
   {
     id: 999,
     name: "Free Umrah Application",
-    price: 100,
+    price: 114,
     description: "Application for free Umrah opportunity"
   }
 ];
